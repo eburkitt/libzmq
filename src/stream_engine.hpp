@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2007-2013 Contributors as noted in the AUTHORS file
+    Copyright (c) 2007-2014 Contributors as noted in the AUTHORS file
 
     This file is part of 0MQ.
 
@@ -87,10 +87,9 @@ namespace zmq
         //  of error or orderly shutdown by the other peer -1 is returned.
         int write (const void *data_, size_t size_);
 
-        //  Reads data from the socket (up to 'size' bytes). Returns the number
-        //  of bytes actually read (even zero is to be considered to be
-        //  a success). In case of error or orderly shutdown by the other
-        //  peer -1 is returned.
+        //  Reads data from the socket (up to 'size' bytes).
+        //  Returns the number of bytes actually read or -1 on error.
+        //  Zero indicates the peer has closed the connection.
         int read (void *data_, size_t size_);
 
         int read_identity (msg_t *msg_);
@@ -102,6 +101,7 @@ namespace zmq
         int pull_msg_from_session (msg_t *msg_);
         int push_msg_to_session (msg_t *msg);
 
+        int write_credential (msg_t *msg_);
         int pull_and_encode (msg_t *msg_);
         int decode_and_push (msg_t *msg_);
         int push_one_then_decode_and_push (msg_t *msg_);
@@ -163,7 +163,6 @@ namespace zmq
         std::string endpoint;
 
         bool plugged;
-        bool terminating;
 
         int (stream_engine_t::*read_msg) (msg_t *msg_);
 

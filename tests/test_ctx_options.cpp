@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2007-2013 Contributors as noted in the AUTHORS file
+    Copyright (c) 2007-2014 Contributors as noted in the AUTHORS file
 
     This file is part of 0MQ.
 
@@ -17,6 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <limits>
 #include "testutil.hpp"
 
 int main (void)
@@ -29,11 +30,18 @@ int main (void)
     assert (ctx);
     
     assert (zmq_ctx_get (ctx, ZMQ_MAX_SOCKETS) == ZMQ_MAX_SOCKETS_DFLT);
+#if defined(ZMQ_USE_SELECT)
+    assert (zmq_ctx_get (ctx, ZMQ_SOCKET_LIMIT) == ZMQ_MAX_SOCKETS_DFLT);
+#elif    defined(ZMQ_USE_POLL) || defined(ZMQ_USE_EPOLL)     \
+      || defined(ZMQ_USE_DEVPOLL) || defined(ZMQ_USE_KQUEUE)
+    assert (zmq_ctx_get (ctx, ZMQ_SOCKET_LIMIT)
+                              == std::numeric_limits<int>::max());
+#endif
     assert (zmq_ctx_get (ctx, ZMQ_IO_THREADS) == ZMQ_IO_THREADS_DFLT);
     assert (zmq_ctx_get (ctx, ZMQ_IPV6) == 0);
     
     rc = zmq_ctx_set (ctx, ZMQ_IPV6, true);
-    assert (zmq_ctx_get (ctx, ZMQ_IPV6) == true);
+    assert (zmq_ctx_get (ctx, ZMQ_IPV6) == 1);
     
     void *router = zmq_socket (ctx, ZMQ_ROUTER);
     int ipv6;

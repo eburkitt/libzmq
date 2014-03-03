@@ -165,7 +165,14 @@ libzmq_la_SOURCES = \
     raw_encoder.hpp \
     raw_encoder.cpp \
     ypipe_conflate.hpp \
-    dbuffer.hpp
+    dbuffer.hpp \
+    tipc_address.cpp \
+    tipc_address.hpp \
+    tipc_listener.cpp \
+    tipc_listener.hpp \
+    tipc_connecter.cpp \
+    tipc_connecter.hpp
+
 
 if ON_MINGW
 libzmq_la_LDFLAGS = -no-undefined -avoid-version -version-info @LTVER@ @LIBZMQ_EXTRA_LDFLAGS@
@@ -173,7 +180,11 @@ else
 if ON_ANDROID
 libzmq_la_LDFLAGS = -avoid-version -version-info @LTVER@ @LIBZMQ_EXTRA_LDFLAGS@
 else
-libzmq_la_LDFLAGS = -version-info @LTVER@ @LIBZMQ_EXTRA_LDFLAGS@
+if ON_LINUX
+libzmq_la_LDFLAGS = -version-info @LTVER@ @LIBZMQ_EXTRA_LDFLAGS@ -Wl,--version-script=$(srcdir)/libzmq.vers
+else
+libzmq_la_LDFLAGS = -version-info @LTVER@ @LIBZMQ_EXTRA_LDFLAGS@ -Wl
+endif
 endif
 endif
 
@@ -187,4 +198,5 @@ endif
 dist-hook:
 		-rm $(distdir)/platform.hpp
 
-
+EXTRA_DIST = \
+	libzmq.pc.cmake.in

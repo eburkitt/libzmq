@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2007-2013 Contributors as noted in the AUTHORS file
+    Copyright (c) 2007-2014 Contributors as noted in the AUTHORS file
 
     This file is part of 0MQ.
 
@@ -46,7 +46,7 @@ void test_round_robin_out (void *ctx)
     //  We have to give the connects time to finish otherwise the requests 
     //  will not properly round-robin. We could alternatively connect the
     //  REQ sockets to the REP sockets.
-    zmq_sleep(1);
+    msleep (SETTLE_TIME);
     
     // Send our peer-replies, and expect every REP it used once in order
     for (size_t peer = 0; peer < services; peer++) {

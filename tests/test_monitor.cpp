@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2007-2013 Contributors as noted in the AUTHORS file
+    Copyright (c) 2007-2014 Contributors as noted in the AUTHORS file
 
     This file is part of 0MQ.
 
@@ -211,7 +211,7 @@ int main (void)
     rc = zmq_socket_monitor (req, "inproc://monitor.req", ZMQ_EVENT_ALL);
     assert (rc == 0);
     threads [1] = zmq_threadstart(&req_socket_monitor, ctx);
-    zmq_sleep(1);
+    msleep (SETTLE_TIME);
 
     // Bind REQ and REP
     rc = zmq_bind (rep, addr.c_str());
@@ -238,8 +238,8 @@ int main (void)
     rc = zmq_close (rep);
     assert (rc == 0);
 
-    // Allow some time for detecting error states
-    zmq_sleep(1);
+    // Allow enough time for detecting error states
+    msleep (250);
 
     //  Close the REQ socket
     rc = zmq_close (req);
