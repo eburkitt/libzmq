@@ -48,6 +48,8 @@ AC_PROG_CXX
 AM_PROG_CC_C_O
 AC_PROG_SED
 AC_PROG_AWK
+PKG_PROG_PKG_CONFIG
+m4_pattern_forbid([^PKG_[A-Z_]+$], [missing some pkg-config macros (pkg-config package)])
 
 # Libtool configuration for different targets. See acinclude.m4
 AC_ARG_VAR([XMLTO], [Path to xmlto command])
@@ -100,46 +102,6 @@ AC_RUN_IFELSE(
 
 AC_MSG_RESULT([$libzmq_tipc_support])
 
-
-
-# Allow libsodium to be installed in a custom path:
-
-AC_ARG_WITH([libsodium],
-    [AS_HELP_STRING([--with-libsodium], 
-        [Specify libsodium prefix])],
-    [zmq_search_libsodium="yes"],
-    [])
-
-if test "x$zmq_search_libsodium" = "xyes"; then
-    if test -r "${with_libsodium}/include/sodium.h"; then
-        CPPFLAGS="-I${with_libsodium}/include ${CPPFLAGS}"
-        LDFLAGS="-L${with_libsodium}/lib ${LDFLAGS}"
-    fi
-fi
-
-AC_ARG_WITH([libsodium-include-dir],
-    [AS_HELP_STRING([--with-libsodium-include-dir], 
-        [Specify libsodium include prefix])],
-    [zmq_search_libsodium_include="yes"],
-    [])
-
-if test "x$zmq_search_libsodium_include" = "xyes"; then
-    if test -r "${with_libsodium_include_dir}/sodium.h"; then
-        CPPFLAGS="-I${with_libsodium_include_dir}/include ${CPPFLAGS}"
-    fi
-fi
-
-AC_ARG_WITH([libsodium_lib_dir],
-    [AS_HELP_STRING([--with-libsodium-lib-dir],
-        [Specify libsodium library prefix])],
-    [zmq_search_libsodium_lib="yes"],
-    [])
-
-if test "x$zmq_search_libsodium_lib" = "xyes"; then
-    if test -r "${with_libsodium_lib_dir}/libsodium.{a|so|dylib}"; then
-        LDFLAGS="-L${with_libsodium}/lib ${LDFLAGS}"
-    fi
-fi
 
 AC_ARG_WITH([relaxed],
     [AS_HELP_STRING([--with-relaxed],
@@ -320,14 +282,6 @@ esac
 AC_CHECK_LIB([pthread], [pthread_create])
 AC_CHECK_LIB([rt], [clock_gettime])
 
-if test "x$zmq_search_libsodium" = "xyes"; then
-    AC_CHECK_LIB([sodium],[sodium_init],,AC_MSG_ERROR(libsodium is not installed.  Install it or don't pass --with-libsodium to configure script))
-else
-    AC_CHECK_LIB([sodium], [sodium_init],,AC_MSG_WARN(libsodium is needed for CURVE security))
-fi
-
-AC_CHECK_LIB([gssapi_krb5], [gss_init_sec_context],,AC_MSG_WARN(libgssapi_krb5 is needed for GSSAPI security))
-
 #
 # Check if the compiler supports -fvisibility=hidden flag. MinGW32 uses __declspec
 #
@@ -380,10 +334,10 @@ AC_CHECK_HEADERS(sys/uio.h, [AC_DEFINE(ZMQ_HAVE_UIO, 1, [Have uio.h header.])])
 # Force not to use eventfd
 AC_ARG_ENABLE([eventfd],
     [AS_HELP_STRING([--disable-eventfd], [disable eventfd [default=no]])],
-    [zmq_disable_eventfd=yes],
-    [zmq_disable_eventfd=no])
+    [zmq_enable_eventfd=$enableval],
+    [zmq_enable_eventfd=yes])
 
-if test "x$zmq_disable_eventfd" != "xyes"; then
+if test "x$zmq_enable_eventfd" = "xyes"; then
     # Check if we have eventfd.h header file.
     AC_CHECK_HEADERS(sys/eventfd.h,
         [AC_DEFINE(ZMQ_HAVE_EVENTFD, 1, [Have eventfd extension.])])
@@ -423,23 +377,50 @@ AC_HEADER_TIME
 AC_TYPE_UINT32_T
 AC_C_VOLATILE
 
+# build using libgssapi_krb5
+AC_ARG_WITH([libgssapi_krb5], [AS_HELP_STRING([--with-libgssapi_krb5],
+    [require libzmq build with libgssapi_krb5 [default=no]])],
+    [require_libgssapi_krb5_ext=$withval],
+    [require_libgssapi_krb5_ext=no])
+
+# conditionally require libgssapi_krb5
+if test "x$require_libgssapi_krb5_ext" != "xno"; then
+    AC_CHECK_LIB([gssapi_krb5], [gss_init_sec_context],,
+        AC_MSG_ERROR(libgssapi_krb5 is needed for GSSAPI security))
+fi
+
+# build using libsodium
+have_sodium_library="no"
+
+AC_ARG_WITH([libsodium], [AS_HELP_STRING([--with-libsodium],
+    [require libzmq build with libsodium. Requires pkg-config [default=no]])],
+    [require_libsodium_ext=$withval],
+    [require_libsodium_ext=yes])
+
+# conditionally require libsodium package
+if test "x$require_libsodium_ext" != "xno"; then
+    PKG_CHECK_MODULES([sodium], [libsodium], [have_sodium_library="yes"])
+fi
+
+if test "x$have_sodium_library" != "xno"; then
+    AC_DEFINE(HAVE_LIBSODIUM, 1, [The libsodium library is to be used.])
+fi
+
+AM_CONDITIONAL(HAVE_SODIUM, test "x$have_sodium_library" != "xno")
+
 # build using pgm
 have_pgm_library="no"
 
 AC_ARG_WITH([pgm], [AS_HELP_STRING([--with-pgm],
     [build libzmq with PGM extension. Requires pkg-config [default=no]])],
-    [with_pgm_ext=yes], [with_pgm_ext=no])
+    [with_pgm_ext=$withval],
+    [with_pgm_ext=no])
 
 # conditionally require pgm package
 if test "x$with_pgm_ext" != "xno"; then
-    m4_ifdef([PKG_CHECK_MODULES], [
-        PKG_CHECK_MODULES([pgm], [openpgm-5.2 >= 5.2],
-            [ have_pgm_library="yes" ],
-            [PKG_CHECK_MODULES([pgm], [openpgm-5.1 >= 5.1],
-                [ have_pgm_library="yes" ])]
-        )
-    ],
-    [AC_MSG_ERROR([--with-pgm requires a working pkg-config installation])])
+    PKG_CHECK_MODULES([pgm], [openpgm-5.2 >= 5.2], [ have_pgm_library="yes" ],
+        [PKG_CHECK_MODULES([pgm], [openpgm-5.1 >= 5.1],
+            [ have_pgm_library="yes" ])])
 fi
 
 if test "x$have_pgm_library" = "xyes"; then
