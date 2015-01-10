@@ -208,6 +208,13 @@ src_libzmq_la_LDFLAGS = \
 	-version-info @LTVER@ \
 	@LIBZMQ_EXTRA_LDFLAGS@
 else
+if ON_CYGWIN
+src_libzmq_la_LDFLAGS = \
+	-no-undefined \
+	-avoid-version \
+	-version-info @LTVER@ \
+	@LIBZMQ_EXTRA_LDFLAGS@
+else
 if ON_ANDROID
 src_libzmq_la_LDFLAGS = \
 	-avoid-version \
@@ -224,6 +231,7 @@ src_libzmq_la_LDFLAGS = \
 	-version-info @LTVER@ \
 	@LIBZMQ_EXTRA_LDFLAGS@ \
 	-Wl
+endif
 endif
 endif
 endif
@@ -326,7 +334,6 @@ test_apps = \
 	tests/test_connect_rid \
 	tests/test_bind_src_address \
 	tests/test_metadata \
-	tests/test_id2fd \
 	tests/test_capabilities \
 	tests/test_xpub_nodrop \
 	tests/test_xpub_manual \
@@ -507,6 +514,7 @@ tests_test_atomics_SOURCES = tests/test_atomics.cpp
 tests_test_atomics_LDADD = src/libzmq.la
 
 if !ON_MINGW
+if !ON_CYGWIN
 test_apps += \
 	tests/test_shutdown_stress \
 	tests/test_pair_ipc \
@@ -539,6 +547,7 @@ test_apps += tests/test_fork
 tests_test_fork_SOURCES = tests/test_fork.cpp
 tests_test_fork_LDADD = src/libzmq.la
 
+endif
 endif
 endif
 
