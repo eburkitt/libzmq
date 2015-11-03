@@ -31,9 +31,10 @@ AC_SUBST(PACKAGE_VERSION)
 # ZeroMQ version 3.0: 2:0:0 (ABI version 2)
 # ZeroMQ version 3.1: 3:0:0 (ABI version 3)
 # ZeroMQ version 4.0: 4:0:0 (ABI version 4)
+# ZeroMQ version 4.1: 5:0:0 (ABI version 5)
 #
 # libzmq -version-info current:revision:age
-LTVER="4:0:0"
+LTVER="5:0:0"
 AC_SUBST(LTVER)
 
 # Take a copy of original flags
@@ -183,14 +184,15 @@ case "${host_os}" in
         if test "x$solaris_has_atomic" = "xno"; then
             AC_DEFINE(ZMQ_FORCE_MUTEXES, 1, [Force to use mutexes])
         fi
-        # ssp library is required for libsodium on Solaris-like systems
-        LDFLAGS="-lssp $LDFLAGS"
-        CPPFLAGS="$CPPFLAGS -Wno-long-long"
         ;;
     *freebsd*)
         # Define on FreeBSD to enable all library features
         CPPFLAGS="-D__BSD_VISIBLE $CPPFLAGS"
         AC_DEFINE(ZMQ_HAVE_FREEBSD, 1, [Have FreeBSD OS])
+        ;;
+    *dragonfly*)
+        CPPFLAGS="-D__BSD_VISIBLE $CPPFLAGS"
+        AC_DEFINE(ZMQ_HAVE_DRAGONFLY, 1, [Have DragonFly OS])
         ;;
     *darwin*)
         # Define on Darwin to enable all library features
@@ -225,7 +227,7 @@ case "${host_os}" in
             AC_DEFINE(ZMQ_FORCE_MUTEXES, 1, [Force to use mutexes])
         fi
         ;;
-    *openbsd*)
+    *openbsd*|*bitrig*)
         # Define on OpenBSD to enable all library features
         CPPFLAGS="-D_BSD_SOURCE $CPPFLAGS"
         AC_DEFINE(ZMQ_HAVE_OPENBSD, 1, [Have OpenBSD OS])
@@ -245,7 +247,7 @@ case "${host_os}" in
         LIBZMQ_CHECK_LANG_FLAG_PREPEND([-Ae])
         AC_CHECK_FUNCS(gethrtime)
         ;;
-    *mingw32*)
+    *mingw*)
         AC_DEFINE(ZMQ_HAVE_WINDOWS, 1, [Have Windows OS])
         AC_DEFINE(ZMQ_HAVE_MINGW32, 1, [Have MinGW32])
         AC_CHECK_HEADERS(windows.h)
@@ -263,15 +265,18 @@ case "${host_os}" in
         libzmq_dso_visibility="no"
 
         if test "x$enable_static" = "xyes"; then
-            AC_MSG_ERROR([Building static libraries is not supported under MinGW32])
+            CPPFLAGS="-DZMQ_STATIC"
         fi
+        
+	# Set FD_SETSIZE to 1024
+	CPPFLAGS=" -DFD_SETSIZE=1024 $CPPFLAGS"
         ;;
     *cygwin*)
         # Define on Cygwin to enable all library features
         CPPFLAGS="-D_GNU_SOURCE $CPPFLAGS"
         AC_DEFINE(ZMQ_HAVE_CYGWIN, 1, [Have Cygwin])
         libzmq_on_cygwin="yes"
-        libzmq_dso_visibility="no"        
+        libzmq_dso_visibility="no"
         if test "x$enable_static" = "xyes"; then
             AC_MSG_ERROR([Building static libraries is not supported under Cygwin])
         fi
@@ -346,6 +351,22 @@ if test "x$zmq_enable_eventfd" = "xyes"; then
         [AC_DEFINE(ZMQ_HAVE_EVENTFD, 1, [Have eventfd extension.])])
 fi
 
+# Conditionally build performance measurement tools
+AC_ARG_ENABLE([perf],
+    [AS_HELP_STRING([--enable-perf], [Build performance measurement tools [default=yes].])],
+    [zmq_enable_perf=$enableval],
+    [zmq_enable_perf=yes])
+
+AM_CONDITIONAL(ENABLE_PERF, test "x$zmq_enable_perf" = "xyes")
+
+# Conditionally build curve key generation tool
+AC_ARG_ENABLE([curve-keygen],
+    [AS_HELP_STRING([--enable-curve-keygen], [Build curve key-generation tool [default=yes].])],
+    [zmq_enable_curve_keygen=$enableval],
+    [zmq_enable_curve_keygen=yes])
+
+AM_CONDITIONAL(ENABLE_CURVE_KEYGEN, test "x$zmq_enable_curve_keygen" = "xyes")
+
 # Use c++ in subsequent tests
 AC_LANG_PUSH(C++)
 
@@ -396,7 +417,7 @@ fi
 have_sodium_library="no"
 
 AC_ARG_WITH([libsodium], [AS_HELP_STRING([--with-libsodium],
-    [require libzmq build with libsodium. Requires pkg-config [default=no]])],
+    [require libzmq build with libsodium crypto library. Requires pkg-config [default=yes]])],
     [require_libsodium_ext=$withval],
     [require_libsodium_ext=yes])
 
@@ -407,7 +428,16 @@ fi
 
 if test "x$have_sodium_library" != "xno"; then
     AC_DEFINE(HAVE_LIBSODIUM, 1, [The libsodium library is to be used.])
+
+    # ssp library is required for libsodium on Solaris-like systems
+    case "${host_os}" in
+        *solaris*)
+            LDFLAGS="-lssp $LDFLAGS"
+            CPPFLAGS="$CPPFLAGS -Wno-long-long"
+        ;;
+    esac
 fi
+
 
 AM_CONDITIONAL(HAVE_SODIUM, test "x$have_sodium_library" != "xno")
 
@@ -436,10 +466,10 @@ AM_CONDITIONAL(HAVE_PGM, test "x$have_pgm_library" = "xyes")
 # This uses "--with-norm" to point to the "norm" directory
 # for "norm/include" and "norm/lib"
 #(if "--with-norm=yes" is given, then assume installed on system)
-AC_ARG_WITH([norm], 
-    [AS_HELP_STRING([--with-norm], 
+AC_ARG_WITH([norm],
+    [AS_HELP_STRING([--with-norm],
         [build libzmq with NORM protocol extension, optionally specifying norm path [default=no]])],
-    [with_norm_ext=$withval], 
+    [with_norm_ext=$withval],
     [with_norm_ext=no])
 
 
@@ -479,9 +509,18 @@ AM_CONDITIONAL(ON_CYGWIN, test "x$libzmq_on_cygwin" = "xyes")
 AM_CONDITIONAL(ON_ANDROID, test "x$libzmq_on_android" = "xyes")
 AM_CONDITIONAL(ON_LINUX, test "x$libzmq_on_linux" = "xyes")
 
+# Check for __atomic_Xxx compiler intrinsics
+AC_LANG_PUSH([C++])
+LIBZMQ_CHECK_ATOMIC_INTRINSICS([
+    AC_DEFINE([ZMQ_HAVE_ATOMIC_INTRINSICS],
+              [1],
+              [Whether compiler has __atomic_Xxx intrinsics.])
+    ])
+AC_LANG_POP([C++])
+
 # Checks for library functions.
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS(perror gettimeofday clock_gettime memset socket getifaddrs freeifaddrs fork)
+AC_CHECK_FUNCS(perror gettimeofday clock_gettime memset socket getifaddrs freeifaddrs fork posix_memalign)
 AC_CHECK_HEADERS([alloca.h])
 
 LIBZMQ_CHECK_SOCK_CLOEXEC([
@@ -540,6 +579,7 @@ AC_CONFIG_FILES([ \
     Makefile \
     src/libzmq.pc \
     doc/Makefile \
+    builds/Makefile \
     builds/msvc/Makefile \
     builds/redhat/zeromq.spec])
 

@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I config
 
 SUBDIRS = doc
 
-DIST_SUBDIRS = builds/msvc doc
+DIST_SUBDIRS = doc builds builds/msvc
 
 pkgconfig_DATA = src/libzmq.pc
 
@@ -26,9 +26,12 @@ src_libzmq_la_SOURCES = \
 	src/atomic_counter.hpp \
 	src/atomic_ptr.hpp \
 	src/blob.hpp \
+	src/client.cpp \
+	src/client.hpp \
 	src/clock.cpp \
 	src/clock.hpp \
 	src/command.hpp \
+	src/condition_variable.hpp \
 	src/config.hpp \
 	src/ctx.cpp \
 	src/ctx.hpp \
@@ -61,6 +64,7 @@ src_libzmq_la_SOURCES = \
 	src/i_encoder.hpp \
 	src/i_engine.hpp \
 	src/i_decoder.hpp \
+	src/i_mailbox.hpp \
 	src/i_poll_events.hpp \
 	src/io_object.cpp \
 	src/io_object.hpp \
@@ -81,6 +85,8 @@ src_libzmq_la_SOURCES = \
 	src/likely.hpp \
 	src/mailbox.cpp \
 	src/mailbox.hpp \
+	src/mailbox_safe.cpp \
+	src/mailbox_safe.hpp \
 	src/mechanism.cpp \
 	src/mechanism.hpp  \
 	src/metadata.cpp \
@@ -144,6 +150,8 @@ src_libzmq_la_SOURCES = \
 	src/router.hpp \
 	src/select.cpp \
 	src/select.hpp \
+	src/server.cpp \
+	src/server.hpp \
 	src/session_base.cpp \
 	src/session_base.hpp \
 	src/signaler.cpp \
@@ -199,7 +207,12 @@ src_libzmq_la_SOURCES = \
 	src/ypipe_conflate.hpp \
 	src/yqueue.hpp \
 	src/zmq.cpp \
-	src/zmq_utils.cpp
+	src/zmq_utils.cpp \
+        src/decoder_allocators.hpp \
+        src/decoder_allocators.cpp \
+        src/socket_poller.hpp \
+        src/socket_poller.cpp
+
 
 if ON_MINGW
 src_libzmq_la_LDFLAGS = \
@@ -250,6 +263,7 @@ src_libzmq_la_CPPFLAGS += ${pgm_CFLAGS}
 src_libzmq_la_LIBADD += ${pgm_LIBS}
 endif
 
+if ENABLE_PERF
 noinst_PROGRAMS = \
 	perf/local_lat \
 	perf/remote_lat \
@@ -275,11 +289,14 @@ perf_inproc_lat_SOURCES = perf/inproc_lat.cpp
 
 perf_inproc_thr_LDADD = src/libzmq.la
 perf_inproc_thr_SOURCES = perf/inproc_thr.cpp
+endif
 
+if ENABLE_CURVE_KEYGEN
 bin_PROGRAMS = tools/curve_keygen
 
 tools_curve_keygen_LDADD = src/libzmq.la
 tools_curve_keygen_SOURCES = tools/curve_keygen.cpp
+endif
 
 #
 # tests
@@ -296,6 +313,7 @@ test_apps = \
 	tests/test_sub_forward \
 	tests/test_invalid_rep \
 	tests/test_msg_flags \
+	tests/test_msg_ffn \
 	tests/test_connect_resolve \
 	tests/test_immediate \
 	tests/test_last_endpoint \
@@ -311,6 +329,8 @@ test_apps = \
 	tests/test_stream_disconnect \
 	tests/test_stream_timeout \
 	tests/test_disconnect_inproc \
+	tests/test_unbind_inproc \
+	tests/test_unbind_wildcard \
 	tests/test_ctx_options \
 	tests/test_ctx_destroy \
 	tests/test_security_null \
@@ -328,6 +348,9 @@ test_apps = \
 	tests/test_inproc_connect \
 	tests/test_issue_566 \
 	tests/test_proxy \
+	tests/test_proxy_single_socket \
+	tests/test_proxy_terminate \
+	tests/test_getsockopt_memset \
 	tests/test_many_sockets \
 	tests/test_ipc_wildcard \
 	tests/test_diffserv \
@@ -338,7 +361,13 @@ test_apps = \
 	tests/test_xpub_nodrop \
 	tests/test_xpub_manual \
 	tests/test_xpub_welcome_msg \
-	tests/test_atomics
+	tests/test_atomics \
+	tests/test_client_server \
+	tests/test_thread_safe \
+	tests/test_socketopt_hwm \
+	tests/test_heartbeats \
+	tests/test_stream_exceeds_buffer \
+	tests/test_poller
 
 tests_test_system_SOURCES = tests/test_system.cpp
 tests_test_system_LDADD = src/libzmq.la
@@ -380,6 +409,9 @@ tests_test_invalid_rep_LDADD = src/libzmq.la
 
 tests_test_msg_flags_SOURCES = tests/test_msg_flags.cpp
 tests_test_msg_flags_LDADD = src/libzmq.la
+
+tests_test_msg_ffn_SOURCES = tests/test_msg_ffn.cpp
+tests_test_msg_ffn_LDADD = src/libzmq.la
 
 tests_test_connect_resolve_SOURCES = tests/test_connect_resolve.cpp
 tests_test_connect_resolve_LDADD = src/libzmq.la
@@ -425,6 +457,12 @@ tests_test_stream_disconnect_LDADD = src/libzmq.la
 
 tests_test_disconnect_inproc_SOURCES = tests/test_disconnect_inproc.cpp
 tests_test_disconnect_inproc_LDADD = src/libzmq.la
+
+tests_test_unbind_inproc_SOURCES = tests/test_unbind_inproc.cpp
+tests_test_unbind_inproc_LDADD = src/libzmq.la
+
+tests_test_unbind_wildcard_SOURCES = tests/test_unbind_wildcard.cpp
+tests_test_unbind_wildcard_LDADD = src/libzmq.la
 
 tests_test_ctx_options_SOURCES = tests/test_ctx_options.cpp
 tests_test_ctx_options_LDADD = src/libzmq.la
@@ -477,6 +515,15 @@ tests_test_issue_566_LDADD = src/libzmq.la
 tests_test_proxy_SOURCES = tests/test_proxy.cpp
 tests_test_proxy_LDADD = src/libzmq.la
 
+tests_test_proxy_single_socket_SOURCES = tests/test_proxy_single_socket.cpp
+tests_test_proxy_single_socket_LDADD = src/libzmq.la
+
+tests_test_proxy_terminate_SOURCES = tests/test_proxy_terminate.cpp
+tests_test_proxy_terminate_LDADD = src/libzmq.la
+
+tests_test_getsockopt_memset_SOURCES = tests/test_getsockopt_memset.cpp
+tests_test_getsockopt_memset_LDADD = src/libzmq.la
+
 tests_test_many_sockets_SOURCES = tests/test_many_sockets.cpp
 tests_test_many_sockets_LDADD = src/libzmq.la
 
@@ -495,9 +542,6 @@ tests_test_bind_src_address_LDADD = src/libzmq.la
 tests_test_metadata_SOURCES = tests/test_metadata.cpp
 tests_test_metadata_LDADD = src/libzmq.la
 
-tests_test_id2fd_SOURCES = tests/test_id2fd.cpp
-tests_test_id2fd_LDADD = src/libzmq.la
-
 tests_test_capabilities_SOURCES = tests/test_capabilities.cpp
 tests_test_capabilities_LDADD = src/libzmq.la
 
@@ -512,6 +556,25 @@ tests_test_xpub_welcome_msg_LDADD = src/libzmq.la
 
 tests_test_atomics_SOURCES = tests/test_atomics.cpp
 tests_test_atomics_LDADD = src/libzmq.la
+
+tests_test_client_server_SOURCES = tests/test_client_server.cpp
+tests_test_client_server_LDADD = src/libzmq.la
+
+tests_test_thread_safe_SOURCES = tests/test_thread_safe.cpp
+tests_test_thread_safe_LDADD = src/libzmq.la
+
+tests_test_socketopt_hwm_SOURCES = tests/test_sockopt_hwm.cpp
+tests_test_socketopt_hwm_LDADD = src/libzmq.la
+
+tests_test_heartbeats_SOURCES = tests/test_heartbeats.cpp
+tests_test_heartbeats_LDADD = src/libzmq.la
+
+tests_test_stream_exceeds_buffer_SOURCES = tests/test_stream_exceeds_buffer.cpp
+tests_test_stream_exceeds_buffer_LDADD = src/libzmq.la
+
+tests_test_poller_SOURCES = tests/test_poller.cpp
+tests_test_poller_LDADD = src/libzmq.la
+
 
 if !ON_MINGW
 if !ON_CYGWIN

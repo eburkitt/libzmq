@@ -16,18 +16,21 @@ android_build_opts
 
 # Use a temporary build directory
 cache="/tmp/android_build/${TOOLCHAIN_NAME}"
+rm -rf "${cache}"
 mkdir -p "${cache}"
 
+# Check for environment variable to clear the prefix and do a clean build
+if [[ $ANDROID_BUILD_CLEAN ]]; then
+    echo "Doing a clean build (removing previous build and depedencies)..."
+    rm -rf "${ANDROID_BUILD_PREFIX}"/*
+fi
+
 ##
-# Build libsodium from latest release tarball
+# Build libsodium from latest master branch
 
 (android_build_verify_so "libsodium.so" &> /dev/null) || {
     rm -rf "${cache}/libsodium"
-    (cd "${cache}" && mkdir libsodium \
-        && wget https://download.libsodium.org/libsodium/releases/LATEST.tar.gz\
-            -O "${cache}/libsodium.tar.gz" \
-        && tar -C libsodium -xf libsodium.tar.gz --strip=1) || exit 1
-    
+    (cd "${cache}" && git clone git://github.com/jedisct1/libsodium.git) || exit 1
     (cd "${cache}/libsodium" && ./autogen.sh \
         && ./configure "${ANDROID_BUILD_OPTS[@]}" --disable-soname-versions \
         && make \
