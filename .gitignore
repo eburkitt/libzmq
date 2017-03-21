@@ -1,9 +1,12 @@
 syntax: glob # for hg-git users
-/Makefile
-builds/Makefile
-builds/msvc/Makefile
+Makefile
+builds/cmake/
+!builds/cmake/Modules/
+!builds/cmake/NSIS.template32.in
+!builds/cmake/NSIS.template64.in
+!builds/cmake/ci_build.sh
+!builds/cmake/platform.hpp.in
 configure
-doc/Makefile
 Makefile.in
 configure
 libtool
@@ -176,3 +179,4 @@ zeromq-*.zip
 core
 build
 test-suite.log
+.idea/

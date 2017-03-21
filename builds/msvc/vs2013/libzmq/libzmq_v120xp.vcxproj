@@ -3,7 +3,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{641C5F36-32EE-4323-B740-992B651CF9D6}</ProjectGuid>
     <ProjectName>libzmq</ProjectName>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v120_xp</PlatformToolset>
   </PropertyGroup>
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="DebugDLL|Win32">
@@ -64,54 +64,34 @@
   <ImportGroup Label="PropertySheets">
     <Import Project="$(ProjectDir)..\..\properties\$(Configuration).props" />
     <Import Project="$(ProjectDir)..\..\properties\Output.props" />
-    <Import Project="$(ProjectDir)..\..\vs2015\$(ProjectName)\$(ProjectName).props" />
+    <Import Project="$(ProjectDir)$(ProjectName).props" />
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='ReleaseLTCG|x64'">
-    <Import Project="..\libsodium.import.props" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='ReleaseLTCG|Win32'">
-    <Import Project="..\libsodium.import.props" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='DebugLTCG|Win32'" />
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='DebugLTCG|x64'" />
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|x64'" />
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='ReleaseLIB|x64'" />
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'" />
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='ReleaseLIB|Win32'" />
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='DebugLIB|Win32'" />
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'" />
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='DebugLIB|x64'" />
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='DebugDLL|x64'" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'">
+    <Link>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\platform.hpp" />
-    <ClInclude Include="..\..\resource.h" />
     <ClInclude Include="..\..\..\..\include\zmq.h" />
-    <ClInclude Include="..\..\..\..\src\zmq_draft.h" />
+    <ClInclude Include="..\..\..\..\include\zmq_utils.h" />
     <ClInclude Include="..\..\..\..\src\address.hpp" />
     <ClInclude Include="..\..\..\..\src\array.hpp" />
     <ClInclude Include="..\..\..\..\src\atomic_counter.hpp" />
     <ClInclude Include="..\..\..\..\src\atomic_ptr.hpp" />
-    <ClInclude Include="..\..\..\..\src\blob.hpp" />
-    <ClInclude Include="..\..\..\..\src\client.hpp" />
     <ClInclude Include="..\..\..\..\src\clock.hpp" />
     <ClInclude Include="..\..\..\..\src\command.hpp" />
-    <ClInclude Include="..\..\..\..\src\condition_variable.hpp" />
     <ClInclude Include="..\..\..\..\src\config.hpp" />
     <ClInclude Include="..\..\..\..\src\ctx.hpp" />
     <ClInclude Include="..\..\..\..\src\curve_client.hpp" />
     <ClInclude Include="..\..\..\..\src\curve_server.hpp" />
     <ClInclude Include="..\..\..\..\src\decoder.hpp" />
-    <ClInclude Include="..\..\..\..\src\decoder_allocators.hpp" />
     <ClInclude Include="..\..\..\..\src\devpoll.hpp" />
-    <ClInclude Include="..\..\..\..\src\dgram.hpp" />
-    <ClInclude Include="..\..\..\..\src\dish.hpp" />
     <ClInclude Include="..\..\..\..\src\dist.hpp" />
     <ClInclude Include="..\..\..\..\src\encoder.hpp" />
     <ClInclude Include="..\..\..\..\src\epoll.hpp" />
     <ClInclude Include="..\..\..\..\src\err.hpp" />
     <ClInclude Include="..\..\..\..\src\fd.hpp" />
     <ClInclude Include="..\..\..\..\src\fq.hpp" />
-    <ClInclude Include="..\..\..\..\src\gather.hpp" />
     <ClInclude Include="..\..\..\..\src\gssapi_client.hpp" />
     <ClInclude Include="..\..\..\..\src\gssapi_mechanism_base.hpp" />
     <ClInclude Include="..\..\..\..\src\gssapi_server.hpp" />
@@ -127,7 +107,6 @@
     <ClInclude Include="..\..\..\..\src\lb.hpp" />
     <ClInclude Include="..\..\..\..\src\likely.hpp" />
     <ClInclude Include="..\..\..\..\src\mailbox.hpp" />
-    <ClInclude Include="..\..\..\..\src\mailbox_safe.hpp" />
     <ClInclude Include="..\..\..\..\src\msg.hpp" />
     <ClInclude Include="..\..\..\..\src\mtrie.hpp" />
     <ClInclude Include="..\..\..\..\src\mutex.hpp" />
@@ -139,9 +118,9 @@
     <ClInclude Include="..\..\..\..\src\pgm_sender.hpp" />
     <ClInclude Include="..\..\..\..\src\pgm_socket.hpp" />
     <ClInclude Include="..\..\..\..\src\pipe.hpp" />
-    <ClInclude Include="..\..\..\..\src\server.hpp" />
     <ClInclude Include="..\..\..\..\src\socks.hpp" />
     <ClInclude Include="..\..\..\..\src\socks_connecter.hpp" />
+    <ClInclude Include="..\..\platform.hpp" />
     <ClInclude Include="..\..\..\..\src\poll.hpp" />
     <ClInclude Include="..\..\..\..\src\poller.hpp" />
     <ClInclude Include="..\..\..\..\src\poller_base.hpp" />
@@ -150,14 +129,12 @@
     <ClInclude Include="..\..\..\..\src\pub.hpp" />
     <ClInclude Include="..\..\..\..\src\pull.hpp" />
     <ClInclude Include="..\..\..\..\src\push.hpp" />
-    <ClInclude Include="..\..\..\..\src\radio.hpp" />
     <ClInclude Include="..\..\..\..\src\random.hpp" />
     <ClInclude Include="..\..\..\..\src\raw_decoder.hpp" />
     <ClInclude Include="..\..\..\..\src\raw_encoder.hpp" />
     <ClInclude Include="..\..\..\..\src\reaper.hpp" />
     <ClInclude Include="..\..\..\..\src\rep.hpp" />
     <ClInclude Include="..\..\..\..\src\req.hpp" />
-    <ClInclude Include="..\..\..\..\src\scatter.hpp" />
     <ClInclude Include="..\..\..\..\src\select.hpp" />
     <ClInclude Include="..\..\..\..\src\session_base.hpp" />
     <ClInclude Include="..\..\..\..\src\signaler.hpp" />
@@ -169,12 +146,8 @@
     <ClInclude Include="..\..\..\..\src\tcp_address.hpp" />
     <ClInclude Include="..\..\..\..\src\tcp_connecter.hpp" />
     <ClInclude Include="..\..\..\..\src\tcp_listener.hpp" />
-    <ClInclude Include="..\..\..\..\src\timers.hpp" />
     <ClInclude Include="..\..\..\..\src\thread.hpp" />
     <ClInclude Include="..\..\..\..\src\trie.hpp" />
-    <ClInclude Include="..\..\..\..\src\tweetnacl.h" />
-    <ClInclude Include="..\..\..\..\src\udp_address.hpp" />
-    <ClInclude Include="..\..\..\..\src\udp_engine.hpp" />
     <ClInclude Include="..\..\..\..\src\v1_decoder.hpp" />
     <ClInclude Include="..\..\..\..\src\v1_encoder.hpp" />
     <ClInclude Include="..\..\..\..\src\v1_protocol.hpp" />
@@ -186,24 +159,20 @@
     <ClInclude Include="..\..\..\..\src\xsub.hpp" />
     <ClInclude Include="..\..\..\..\src\ypipe.hpp" />
     <ClInclude Include="..\..\..\..\src\yqueue.hpp" />
+    <ClInclude Include="..\..\resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\src\address.cpp" />
-    <ClCompile Include="..\..\..\..\src\client.cpp" />
     <ClCompile Include="..\..\..\..\src\clock.cpp" />
     <ClCompile Include="..\..\..\..\src\ctx.cpp" />
     <ClCompile Include="..\..\..\..\src\curve_client.cpp" />
     <ClCompile Include="..\..\..\..\src\curve_server.cpp" />
     <ClCompile Include="..\..\..\..\src\dealer.cpp" />
-    <ClCompile Include="..\..\..\..\src\decoder_allocators.cpp" />
     <ClCompile Include="..\..\..\..\src\devpoll.cpp" />
-    <ClCompile Include="..\..\..\..\src\dgram.cpp" />
-    <ClCompile Include="..\..\..\..\src\dish.cpp" />
     <ClCompile Include="..\..\..\..\src\dist.cpp" />
     <ClCompile Include="..\..\..\..\src\epoll.cpp" />
     <ClCompile Include="..\..\..\..\src\err.cpp" />
     <ClCompile Include="..\..\..\..\src\fq.cpp" />
-    <ClCompile Include="..\..\..\..\src\gather.cpp" />
     <ClCompile Include="..\..\..\..\src\gssapi_client.cpp" />
     <ClCompile Include="..\..\..\..\src\gssapi_mechanism_base.cpp" />
     <ClCompile Include="..\..\..\..\src\gssapi_server.cpp" />
@@ -216,7 +185,6 @@
     <ClCompile Include="..\..\..\..\src\kqueue.cpp" />
     <ClCompile Include="..\..\..\..\src\lb.cpp" />
     <ClCompile Include="..\..\..\..\src\mailbox.cpp" />
-    <ClCompile Include="..\..\..\..\src\mailbox_safe.cpp" />
     <ClCompile Include="..\..\..\..\src\mechanism.cpp" />
     <ClCompile Include="..\..\..\..\src\metadata.cpp" />
     <ClCompile Include="..\..\..\..\src\msg.cpp" />
@@ -234,14 +202,11 @@
     <ClCompile Include="..\..\..\..\src\plain_server.cpp" />
     <ClCompile Include="..\..\..\..\src\poll.cpp" />
     <ClCompile Include="..\..\..\..\src\poller_base.cpp" />
-    <ClCompile Include="..\..\..\..\src\precompiled.cpp">
-      <PrecompiledHeader>Create</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\precompiled.cpp" />
     <ClCompile Include="..\..\..\..\src\proxy.cpp" />
     <ClCompile Include="..\..\..\..\src\pub.cpp" />
     <ClCompile Include="..\..\..\..\src\pull.cpp" />
     <ClCompile Include="..\..\..\..\src\push.cpp" />
-    <ClCompile Include="..\..\..\..\src\radio.cpp" />
     <ClCompile Include="..\..\..\..\src\random.cpp" />
     <ClCompile Include="..\..\..\..\src\raw_decoder.cpp" />
     <ClCompile Include="..\..\..\..\src\raw_encoder.cpp" />
@@ -249,13 +214,10 @@
     <ClCompile Include="..\..\..\..\src\rep.cpp" />
     <ClCompile Include="..\..\..\..\src\req.cpp" />
     <ClCompile Include="..\..\..\..\src\router.cpp" />
-    <ClCompile Include="..\..\..\..\src\scatter.cpp" />
     <ClCompile Include="..\..\..\..\src\select.cpp" />
-    <ClCompile Include="..\..\..\..\src\server.cpp" />
     <ClCompile Include="..\..\..\..\src\session_base.cpp" />
     <ClCompile Include="..\..\..\..\src\signaler.cpp" />
     <ClCompile Include="..\..\..\..\src\socket_base.cpp" />
-    <ClCompile Include="..\..\..\..\src\socket_poller.cpp" />
     <ClCompile Include="..\..\..\..\src\socks.cpp" />
     <ClCompile Include="..\..\..\..\src\socks_connecter.cpp" />
     <ClCompile Include="..\..\..\..\src\stream.cpp" />
@@ -266,13 +228,7 @@
     <ClCompile Include="..\..\..\..\src\tcp_connecter.cpp" />
     <ClCompile Include="..\..\..\..\src\tcp_listener.cpp" />
     <ClCompile Include="..\..\..\..\src\thread.cpp" />
-    <ClCompile Include="..\..\..\..\src\timers.cpp" />
     <ClCompile Include="..\..\..\..\src\trie.cpp" />
-    <ClCompile Include="..\..\..\..\src\tweetnacl.c">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\src\udp_address.cpp" />
-    <ClCompile Include="..\..\..\..\src\udp_engine.cpp" />
     <ClCompile Include="..\..\..\..\src\v1_decoder.cpp" />
     <ClCompile Include="..\..\..\..\src\v1_encoder.cpp" />
     <ClCompile Include="..\..\..\..\src\v2_decoder.cpp" />
